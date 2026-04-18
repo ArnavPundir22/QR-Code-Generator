@@ -1,14 +1,57 @@
 import io
+import os
 import base64
 import urllib.request
 import urllib.parse
+import functools
 import qrcode
-from flask import Flask, render_template, request, jsonify
+from dotenv import load_dotenv
+from flask import (
+    Flask, render_template, request, jsonify,
+    redirect, url_for, session,
+)
+from authlib.integrations.flask_client import OAuth
 from PIL import Image, ImageDraw
 
+load_dotenv()
+
 app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24))
+
+oauth = OAuth(app)
+
+# ── Google OAuth ─────────────────────────────────────────────────────────────
+oauth.register(
+    name="google",
+    client_id=os.environ.get("GOOGLE_CLIENT_ID"),
+    client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={"scope": "openid email profile"},
+)
+
+# ── GitHub OAuth ─────────────────────────────────────────────────────────────
+oauth.register(
+    name="github",
+    client_id=os.environ.get("GITHUB_CLIENT_ID"),
+    client_secret=os.environ.get("GITHUB_CLIENT_SECRET"),
+    api_base_url="https://api.github.com/",
+    access_token_url="https://github.com/login/oauth/access_token",
+    authorize_url="https://github.com/login/oauth/authorize",
+    client_kwargs={"scope": "read:user user:email"},
+)
 
 
+# ── Auth helpers ──────────────────────────────────────────────────────────────
+def login_required(f):
+    @functools.wraps(f)
+    def decorated(*args, **kwargs):
+        if "user" not in session:
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated
+
+
+# ── QR helpers ────────────────────────────────────────────────────────────────
 def generate_standard_qr(link, fill_color, back_color, box_size, border):
     qr = qrcode.QRCode(
         version=None,
@@ -63,12 +106,73 @@ def img_to_base64(img):
     return base64.b64encode(buffer.read()).decode("utf-8")
 
 
+# ── Auth routes ───────────────────────────────────────────────────────────────
+@app.route("/login")
+def login():
+    if "user" in session:
+        return redirect(url_for("index"))
+    google_enabled = bool(os.environ.get("GOOGLE_CLIENT_ID"))
+    github_enabled = bool(os.environ.get("GITHUB_CLIENT_ID"))
+    return render_template("login.html",
+                           google_enabled=google_enabled,
+                           github_enabled=github_enabled)
+
+
+@app.route("/login/google")
+def login_google():
+    redirect_uri = url_for("auth_google", _external=True)
+    return oauth.google.authorize_redirect(redirect_uri)
+
+
+@app.route("/auth/google")
+def auth_google():
+    token = oauth.google.authorize_access_token()
+    user_info = token.get("userinfo") or oauth.google.userinfo()
+    session["user"] = {
+        "name": user_info.get("name", user_info.get("email", "User")),
+        "email": user_info.get("email", ""),
+        "avatar": user_info.get("picture", ""),
+        "provider": "google",
+    }
+    return redirect(url_for("index"))
+
+
+@app.route("/login/github")
+def login_github():
+    redirect_uri = url_for("auth_github", _external=True)
+    return oauth.github.authorize_redirect(redirect_uri)
+
+
+@app.route("/auth/github")
+def auth_github():
+    oauth.github.authorize_access_token()
+    resp = oauth.github.get("user")
+    resp.raise_for_status()
+    profile = resp.json()
+    session["user"] = {
+        "name": profile.get("name") or profile.get("login", "GitHub User"),
+        "email": profile.get("email", ""),
+        "avatar": profile.get("avatar_url", ""),
+        "provider": "github",
+    }
+    return redirect(url_for("index"))
+
+
+@app.route("/logout")
+def logout():
+    session.pop("user", None)
+    return redirect(url_for("login"))
+
+
+# ── App routes ────────────────────────────────────────────────────────────────
 @app.route("/")
+@login_required
 def index():
-    return render_template("index.html")
+    return render_template("index.html", user=session["user"])
 
 
 @app.route("/generate", methods=["POST"])
+@login_required
 def generate():
     try:
         link = request.form.get("link", "").strip()
@@ -100,6 +204,7 @@ def generate():
 
 
 @app.route("/shorten", methods=["POST"])
+@login_required
 def shorten():
     try:
         url = request.json.get("url", "").strip()
