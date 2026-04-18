@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QR Code Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+  <!-- Animated background blobs -->
+  <div class="bg-blob blob-1"></div>
+  <div class="bg-blob blob-2"></div>
+  <div class="bg-blob blob-3"></div>
+
+  <div class="container">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="logo-mark">
+        <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="2" y="2" width="16" height="16" rx="2" stroke="currentColor" stroke-width="2.5"/>
+          <rect x="6" y="6" width="8" height="8" fill="currentColor"/>
+          <rect x="22" y="2" width="16" height="16" rx="2" stroke="currentColor" stroke-width="2.5"/>
+          <rect x="26" y="6" width="8" height="8" fill="currentColor"/>
+          <rect x="2" y="22" width="16" height="16" rx="2" stroke="currentColor" stroke-width="2.5"/>
+          <rect x="6" y="26" width="8" height="8" fill="currentColor"/>
+          <rect x="22" y="22" width="6" height="6" fill="currentColor"/>
+          <rect x="32" y="22" width="6" height="6" fill="currentColor"/>
+          <rect x="22" y="32" width="6" height="6" fill="currentColor"/>
+          <rect x="32" y="32" width="6" height="6" fill="currentColor"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="header-title">QR Code Generator</h1>
+        <p class="header-subtitle">Create beautiful, customised QR codes instantly</p>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark/light mode">
+        <span class="theme-icon" id="themeIcon">🌙</span>
+      </button>
+    </header>
+
+    <!-- Main layout -->
+    <main class="main-grid">
+
+      <!-- Left panel: Controls -->
+      <section class="card controls-card" aria-label="QR Code configuration">
+
+        <!-- Mode tabs -->
+        <div class="tabs" role="tablist" aria-label="QR Code mode">
+          <button class="tab active" id="tab-standard" role="tab" aria-selected="true" data-mode="standard">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h4v4H7zM13 7h4v4h-4zM7 13h4v4H7zM13 13h4v4h-4z"/></svg>
+            Standard
+          </button>
+          <button class="tab" id="tab-logo" role="tab" aria-selected="false" data-mode="logo">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
+            With Logo
+          </button>
+        </div>
+
+        <form id="qrForm" novalidate>
+          <input type="hidden" name="mode" id="modeInput" value="standard" />
+
+          <!-- URL / Text input -->
+          <div class="field">
+            <label class="field-label" for="linkInput">URL or Text</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              <input
+                type="text"
+                id="linkInput"
+                name="link"
+                class="input"
+                placeholder="https://example.com or any text…"
+                autocomplete="off"
+                spellcheck="false"
+                aria-required="true"
+              />
+            </div>
+            <span class="field-error" id="linkError" role="alert"></span>
+          </div>
+
+          <!-- Logo upload (Logo mode only) -->
+          <div class="field logo-field hidden" id="logoField">
+            <label class="field-label" for="logoInput">Logo Image</label>
+            <label class="file-drop" id="fileDrop" for="logoInput">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span class="file-drop-text" id="fileDropText">Click or drag an image here</span>
+              <span class="file-drop-hint">PNG, JPG, SVG — transparent logos work best</span>
+              <input type="file" id="logoInput" name="logo" accept="image/*" class="visually-hidden" />
+            </label>
+            <span class="field-error" id="logoError" role="alert"></span>
+          </div>
+
+          <!-- Colour pickers -->
+          <div class="field-row">
+            <div class="field">
+              <label class="field-label" for="fillColor">Foreground</label>
+              <div class="color-picker-wrapper">
+                <input type="color" id="fillColor" name="fill_color" value="#000000" class="color-input" aria-label="Foreground colour" />
+                <span class="color-value" id="fillColorValue">#000000</span>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label" for="backColor">Background</label>
+              <div class="color-picker-wrapper">
+                <input type="color" id="backColor" name="back_color" value="#ffffff" class="color-input" aria-label="Background colour" />
+                <span class="color-value" id="backColorValue">#ffffff</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sliders -->
+          <div class="field-row">
+            <div class="field">
+              <label class="field-label" for="boxSize">
+                Box Size
+                <span class="slider-value" id="boxSizeValue">10</span>
+              </label>
+              <input type="range" id="boxSize" name="box_size" min="1" max="20" value="10" class="slider" aria-valuemin="1" aria-valuemax="20" aria-valuenow="10" />
+            </div>
+            <div class="field">
+              <label class="field-label" for="borderSize">
+                Border
+                <span class="slider-value" id="borderSizeValue">4</span>
+              </label>
+              <input type="range" id="borderSize" name="border" min="0" max="10" value="4" class="slider" aria-valuemin="0" aria-valuemax="10" aria-valuenow="4" />
+            </div>
+          </div>
+
+          <!-- Preset colour themes -->
+          <div class="field">
+            <span class="field-label">Colour Presets</span>
+            <div class="presets">
+              <button type="button" class="preset" data-fill="#000000" data-back="#ffffff" aria-label="Classic black on white">
+                <span class="preset-swatch" style="background:#000;border-color:#e0e0e0"></span>Classic
+              </button>
+              <button type="button" class="preset" data-fill="#6c47ff" data-back="#f0ecff" aria-label="Purple theme">
+                <span class="preset-swatch" style="background:#6c47ff"></span>Violet
+              </button>
+              <button type="button" class="preset" data-fill="#0ea5e9" data-back="#e0f4ff" aria-label="Sky blue theme">
+                <span class="preset-swatch" style="background:#0ea5e9"></span>Sky
+              </button>
+              <button type="button" class="preset" data-fill="#10b981" data-back="#d1fae5" aria-label="Emerald green theme">
+                <span class="preset-swatch" style="background:#10b981"></span>Emerald
+              </button>
+              <button type="button" class="preset" data-fill="#f43f5e" data-back="#ffe4e6" aria-label="Rose red theme">
+                <span class="preset-swatch" style="background:#f43f5e"></span>Rose
+              </button>
+              <button type="button" class="preset" data-fill="#f59e0b" data-back="#fef3c7" aria-label="Amber yellow theme">
+                <span class="preset-swatch" style="background:#f59e0b"></span>Amber
+              </button>
+            </div>
+          </div>
+
+          <!-- Generate button -->
+          <button type="submit" class="btn-generate" id="generateBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span id="generateBtnText">Generate QR Code</span>
+          </button>
+        </form>
+      </section>
+
+      <!-- Right panel: Preview -->
+      <section class="card preview-card" aria-label="QR Code preview">
+        <div class="preview-header">
+          <h2 class="preview-title">Preview</h2>
+          <button class="btn-download hidden" id="downloadBtn" aria-label="Download QR code image">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download PNG
+          </button>
+        </div>
+
+        <!-- Placeholder state -->
+        <div class="preview-placeholder" id="previewPlaceholder">
+          <div class="placeholder-icon">
+            <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="6" y="6" width="28" height="28" rx="4" stroke="currentColor" stroke-width="3"/>
+              <rect x="14" y="14" width="12" height="12" fill="currentColor"/>
+              <rect x="46" y="6" width="28" height="28" rx="4" stroke="currentColor" stroke-width="3"/>
+              <rect x="54" y="14" width="12" height="12" fill="currentColor"/>
+              <rect x="6" y="46" width="28" height="28" rx="4" stroke="currentColor" stroke-width="3"/>
+              <rect x="14" y="54" width="12" height="12" fill="currentColor"/>
+              <rect x="46" y="46" width="12" height="12" fill="currentColor"/>
+              <rect x="62" y="46" width="12" height="12" fill="currentColor"/>
+              <rect x="46" y="62" width="12" height="12" fill="currentColor"/>
+              <rect x="62" y="62" width="12" height="12" fill="currentColor"/>
+            </svg>
+          </div>
+          <p class="placeholder-text">Your QR code will appear here</p>
+          <p class="placeholder-hint">Enter a URL and click Generate</p>
+        </div>
+
+        <!-- Loading state -->
+        <div class="preview-loading hidden" id="previewLoading" aria-live="polite" aria-label="Generating QR code">
+          <div class="spinner"></div>
+          <p>Generating…</p>
+        </div>
+
+        <!-- Error state -->
+        <div class="preview-error hidden" id="previewError" role="alert">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <p id="errorMsg">Something went wrong.</p>
+        </div>
+
+        <!-- Result state -->
+        <div class="preview-result hidden" id="previewResult">
+          <div class="qr-frame">
+            <img id="qrImage" src="" alt="Generated QR code" class="qr-img" />
+          </div>
+          <p class="qr-caption" id="qrCaption"></p>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="footer">
+      Built with <span class="heart">♥</span> using Python &amp; Flask &nbsp;·&nbsp; QR codes support Error Correction Level&nbsp;H
+    </footer>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
