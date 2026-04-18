@@ -1,6 +1,9 @@
 import io
 import os
 import base64
+import ipaddress
+import logging
+import socket
 import urllib.request
 import urllib.parse
 import functools
@@ -16,7 +19,18 @@ from PIL import Image, ImageDraw
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24))
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+_secret_key = os.environ.get("SECRET_KEY")
+if not _secret_key:
+    logger.warning(
+        "SECRET_KEY is not set. A temporary key will be used, which means all "
+        "sessions will be invalidated on every restart. Set SECRET_KEY in your "
+        ".env file for a persistent key."
+    )
+    _secret_key = os.urandom(24)
+app.secret_key = _secret_key
 
 oauth = OAuth(app)
 
@@ -203,6 +217,23 @@ def generate():
         return jsonify({"error": "An error occurred while generating the QR code. Please check your inputs and try again."}), 500
 
 
+def _is_safe_url_host(url: str) -> bool:
+    """Return False if the URL resolves to a private/loopback/reserved address."""
+    try:
+        parsed = urllib.parse.urlparse(url)
+        hostname = parsed.hostname
+        if not hostname:
+            return False
+        addr = socket.getaddrinfo(hostname, None, proto=socket.IPPROTO_TCP)
+        for item in addr:
+            ip = ipaddress.ip_address(item[4][0])
+            if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
+                return False
+        return True
+    except Exception:
+        return False
+
+
 @app.route("/shorten", methods=["POST"])
 @login_required
 def shorten():
@@ -212,6 +243,8 @@ def shorten():
             return jsonify({"error": "No URL provided."}), 400
         if not (url.startswith("http://") or url.startswith("https://")):
             return jsonify({"error": "Only http:// and https:// URLs can be shortened."}), 400
+        if not _is_safe_url_host(url):
+            return jsonify({"error": "The provided URL is not allowed."}), 400
         api_url = "https://tinyurl.com/api-create.php?url=" + urllib.parse.quote(url, safe="")
         try:
             with urllib.request.urlopen(api_url, timeout=5) as resp:
@@ -224,6 +257,7 @@ def shorten():
             return jsonify({"error": "Could not shorten the URL."}), 502
         return jsonify({"short_url": short})
     except Exception:
+        logger.exception("Unexpected error in /shorten")
         return jsonify({"error": "URL shortening failed. Please try again."}), 500
 
 
