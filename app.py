@@ -105,9 +105,16 @@ def shorten():
         url = request.json.get("url", "").strip()
         if not url:
             return jsonify({"error": "No URL provided."}), 400
+        if not (url.startswith("http://") or url.startswith("https://")):
+            return jsonify({"error": "Only http:// and https:// URLs can be shortened."}), 400
         api_url = "https://tinyurl.com/api-create.php?url=" + urllib.parse.quote(url, safe="")
-        with urllib.request.urlopen(api_url, timeout=5) as resp:
-            short = resp.read().decode().strip()
+        try:
+            with urllib.request.urlopen(api_url, timeout=5) as resp:
+                short = resp.read().decode().strip()
+        except urllib.error.HTTPError as exc:
+            return jsonify({"error": f"TinyURL returned an error ({exc.code}). Please try again."}), 502
+        except urllib.error.URLError:
+            return jsonify({"error": "Could not reach the URL shortening service. Check your network."}), 502
         if not short.startswith("http"):
             return jsonify({"error": "Could not shorten the URL."}), 502
         return jsonify({"short_url": short})

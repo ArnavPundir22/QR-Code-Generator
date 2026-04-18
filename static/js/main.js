@@ -165,8 +165,8 @@
         shortenInfo.textContent = '✓ URL shortened!';
       }
       shortenInfo.classList.remove('hidden');
-    } catch {
-      shortenInfo.textContent = 'Could not reach the server.';
+    } catch (err) {
+      shortenInfo.textContent = 'An error occurred while shortening the URL.';
       shortenInfo.classList.add('shorten-info--error');
       shortenInfo.classList.remove('hidden');
     } finally {
