@@ -32,6 +32,16 @@
   const themeIcon     = document.getElementById('themeIcon');
   const presetBtns    = document.querySelectorAll('.preset');
 
+  // Shorten refs
+  const shortenBtn      = document.getElementById('shortenBtn');
+  const shortenBtnText  = document.getElementById('shortenBtnText');
+  const shortenInfo     = document.getElementById('shortenInfo');
+
+  // Logo preview refs
+  const logoPreviewWrap   = document.getElementById('logoPreviewWrap');
+  const logoPreview       = document.getElementById('logoPreview');
+  const logoPreviewRemove = document.getElementById('logoPreviewRemove');
+
   // Preview panels
   const previewPlaceholder = document.getElementById('previewPlaceholder');
   const previewLoading     = document.getElementById('previewLoading');
@@ -74,8 +84,7 @@
         logoField.classList.remove('hidden');
       } else {
         logoField.classList.add('hidden');
-        logoInput.value = '';
-        fileDropText.textContent = 'Click or drag an image here';
+        clearLogoPreview();
         logoError.textContent = '';
       }
     });
@@ -92,14 +101,77 @@
     const files = e.dataTransfer.files;
     if (files.length) {
       logoInput.files = files;
-      fileDropText.textContent = files[0].name;
+      showLogoPreview(files[0]);
       logoError.textContent = '';
     }
   });
   logoInput.addEventListener('change', () => {
     if (logoInput.files.length) {
-      fileDropText.textContent = logoInput.files[0].name;
+      showLogoPreview(logoInput.files[0]);
       logoError.textContent = '';
+    }
+  });
+
+  // ── Logo preview helpers ──────────────────────────────────
+  function showLogoPreview(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      logoPreview.src = e.target.result;
+      fileDropText.textContent = file.name;
+      logoPreviewWrap.classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function clearLogoPreview() {
+    logoInput.value = '';
+    logoPreview.src = '';
+    logoPreviewWrap.classList.add('hidden');
+    fileDropText.textContent = 'Click or drag an image here';
+  }
+
+  logoPreviewRemove.addEventListener('click', (e) => {
+    e.preventDefault();
+    clearLogoPreview();
+    logoError.textContent = '';
+  });
+
+  // ── URL Shortener ─────────────────────────────────────────
+  shortenBtn.addEventListener('click', async () => {
+    const url = linkInput.value.trim();
+    if (!url) {
+      linkError.textContent = 'Please enter a URL to shorten.';
+      linkInput.focus();
+      return;
+    }
+    linkError.textContent = '';
+    shortenBtn.disabled = true;
+    shortenBtnText.textContent = 'Shortening…';
+    shortenInfo.classList.add('hidden');
+    shortenInfo.classList.remove('shorten-info--error');
+
+    try {
+      const resp = await fetch('/shorten', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+      const data = await resp.json();
+      if (!resp.ok || data.error) {
+        shortenInfo.textContent = data.error || 'Could not shorten URL.';
+        shortenInfo.classList.add('shorten-info--error');
+      } else {
+        linkInput.value = data.short_url;
+        shortenInfo.textContent = '✓ URL shortened!';
+      }
+      shortenInfo.classList.remove('hidden');
+    } catch {
+      shortenInfo.textContent = 'Could not reach the server.';
+      shortenInfo.classList.add('shorten-info--error');
+      shortenInfo.classList.remove('hidden');
+    } finally {
+      shortenBtn.disabled = false;
+      shortenBtnText.textContent = 'Shorten URL';
     }
   });
 
@@ -213,3 +285,4 @@
   });
 
 })();
+

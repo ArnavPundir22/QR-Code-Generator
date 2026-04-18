@@ -80,6 +80,13 @@
                 aria-required="true"
               />
             </div>
+            <div class="shorten-row">
+              <button type="button" class="btn-shorten" id="shortenBtn" aria-label="Shorten URL">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M15 7h3a5 5 0 0 1 0 10h-3m-6 0H6A5 5 0 0 1 6 7h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                <span id="shortenBtnText">Shorten URL</span>
+              </button>
+              <span class="shorten-info hidden" id="shortenInfo"></span>
+            </div>
             <span class="field-error" id="linkError" role="alert"></span>
           </div>
 
@@ -92,6 +99,11 @@
               <span class="file-drop-hint">PNG, JPG, SVG — transparent logos work best</span>
               <input type="file" id="logoInput" name="logo" accept="image/*" class="visually-hidden" />
             </label>
+            <!-- Circular logo preview -->
+            <div class="logo-preview-wrap hidden" id="logoPreviewWrap">
+              <img id="logoPreview" src="" alt="Logo preview" class="logo-preview-img" />
+              <button type="button" class="logo-preview-remove" id="logoPreviewRemove" aria-label="Remove logo">✕</button>
+            </div>
             <span class="field-error" id="logoError" role="alert"></span>
           </div>
 

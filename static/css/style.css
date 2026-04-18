@@ -626,3 +626,105 @@ body {
   from { opacity: 0; transform: translateY(-10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* =========================================================
+   URL Shortener
+   ========================================================= */
+.shorten-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.btn-shorten {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1.5px solid var(--accent);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--accent-2);
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition), transform var(--transition);
+  flex-shrink: 0;
+}
+
+.btn-shorten:hover {
+  background: var(--accent);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.btn-shorten:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.shorten-info {
+  font-size: 0.8rem;
+  color: var(--success);
+  font-weight: 500;
+}
+
+.shorten-info--error {
+  color: var(--error);
+}
+
+/* =========================================================
+   Circular Logo Preview
+   ========================================================= */
+.logo-preview-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: rgba(108, 71, 255, 0.08);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  animation: slideDown 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.logo-preview-img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2.5px solid var(--accent);
+  box-shadow: 0 0 12px var(--accent-glow);
+  flex-shrink: 0;
+  background: #fff;
+}
+
+.logo-preview-remove {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  background: rgba(244, 63, 94, 0.15);
+  border: none;
+  color: var(--error);
+  font-size: 0.75rem;
+  font-weight: 700;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+  transition: background var(--transition), transform var(--transition);
+}
+
+.logo-preview-remove:hover {
+  background: var(--error);
+  color: #fff;
+  transform: scale(1.15);
+}
+

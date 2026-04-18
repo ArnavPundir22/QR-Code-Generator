@@ -1,8 +1,10 @@
 import io
 import base64
+import urllib.request
+import urllib.parse
 import qrcode
 from flask import Flask, render_template, request, jsonify
-from PIL import Image
+from PIL import Image, ImageDraw
 
 app = Flask(__name__)
 
@@ -20,6 +22,18 @@ def generate_standard_qr(link, fill_color, back_color, box_size, border):
     return img.convert("RGB")
 
 
+def make_circle_logo(logo: Image.Image, size: int) -> Image.Image:
+    """Resize logo to a square and apply a circular mask, returning an RGBA image."""
+    logo = logo.convert("RGBA")
+    logo = logo.resize((size, size), Image.Resampling.LANCZOS)
+    mask = Image.new("L", (size, size), 0)
+    draw = ImageDraw.Draw(mask)
+    draw.ellipse((0, 0, size, size), fill=255)
+    circle = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    circle.paste(logo, mask=mask)
+    return circle
+
+
 def generate_logo_qr(link, logo_file, fill_color, back_color, box_size, border):
     qr = qrcode.QRCode(
         version=None,
@@ -29,20 +43,17 @@ def generate_logo_qr(link, logo_file, fill_color, back_color, box_size, border):
     )
     qr.add_data(link)
     qr.make(fit=True)
-    img_qr = qr.make_image(fill_color=fill_color, back_color=back_color).convert("RGB")
+    img_qr = qr.make_image(fill_color=fill_color, back_color=back_color).convert("RGBA")
 
-    logo = Image.open(logo_file)
-    logo_base_width = int(img_qr.size[0] * 0.25)
-    w_percent = logo_base_width / float(logo.size[0])
-    h_size = int(float(logo.size[1]) * w_percent)
-    logo = logo.resize((logo_base_width, h_size), Image.Resampling.LANCZOS)
+    logo_size = int(img_qr.size[0] * 0.25)
+    logo = make_circle_logo(Image.open(logo_file), logo_size)
 
     pos = (
         (img_qr.size[0] - logo.size[0]) // 2,
         (img_qr.size[1] - logo.size[1]) // 2,
     )
-    img_qr.paste(logo, pos, logo if logo.mode == "RGBA" else None)
-    return img_qr
+    img_qr.paste(logo, pos, logo)
+    return img_qr.convert("RGB")
 
 
 def img_to_base64(img):
@@ -88,5 +99,22 @@ def generate():
         return jsonify({"error": "An error occurred while generating the QR code. Please check your inputs and try again."}), 500
 
 
+@app.route("/shorten", methods=["POST"])
+def shorten():
+    try:
+        url = request.json.get("url", "").strip()
+        if not url:
+            return jsonify({"error": "No URL provided."}), 400
+        api_url = "https://tinyurl.com/api-create.php?url=" + urllib.parse.quote(url, safe="")
+        with urllib.request.urlopen(api_url, timeout=5) as resp:
+            short = resp.read().decode().strip()
+        if not short.startswith("http"):
+            return jsonify({"error": "Could not shorten the URL."}), 502
+        return jsonify({"short_url": short})
+    except Exception:
+        return jsonify({"error": "URL shortening failed. Please try again."}), 500
+
+
 if __name__ == "__main__":
     app.run(debug=False)
+
