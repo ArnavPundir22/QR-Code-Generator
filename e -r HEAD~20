@@ -1,0 +1,112 @@
+[33mcommit 1079045abc375c69b2e593ed992ce7984bf09416[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Merge: a5d53ea b5bc1bf
+Author: Arnav Pundir <arnavp128@gmail.com>
+Date:   Sat Apr 18 12:56:53 2026 +0530
+
+    Merge pull request #3 add-link-shortner-option
+    
+    Remove OAuth authentication gate
+
+[33mcommit b5bc1bf73e07217b7ad256759414d6b151e5fa31[m[33m ([m[1;31morigin/copilot/add-link-shortner-option[m[33m)[m
+Author: copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>
+Date:   Sat Apr 18 07:23:47 2026 +0000
+
+    revert: remove authentication – app is open access again
+    
+    Agent-Logs-Url: https://github.com/ArnavPundir22/QR-Code-Generator/sessions/f19517f5-7c43-4400-af40-a423e1b1a851
+    
+    Co-authored-by: ArnavPundir22 <179984094+ArnavPundir22@users.noreply.github.com>
+
+[33mcommit 0bbdd8e4f54a907167dadb5fbfa4da34b7300bfb[m
+Author: copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>
+Date:   Sat Apr 18 07:18:47 2026 +0000
+
+    fix: add multicast check to SSRF guard and improve docstrings
+    
+    Agent-Logs-Url: https://github.com/ArnavPundir22/QR-Code-Generator/sessions/c2d0d80a-06ef-490a-ac3a-006da87a6ea7
+    
+    Co-authored-by: ArnavPundir22 <179984094+ArnavPundir22@users.noreply.github.com>
+
+[33mcommit 1e4eabd3ef2dbe75e0eb83c2e372c550f57e5014[m
+Author: copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>
+Date:   Sat Apr 18 07:18:03 2026 +0000
+
+    fix: address review – SECRET_KEY warning, SSRF protection, exception logging
+    
+    Agent-Logs-Url: https://github.com/ArnavPundir22/QR-Code-Generator/sessions/c2d0d80a-06ef-490a-ac3a-006da87a6ea7
+    
+    Co-authored-by: ArnavPundir22 <179984094+ArnavPundir22@users.noreply.github.com>
+
+[33mcommit 644568a93cba0f7c3e7662b18dee0d653963c109[m
+Author: copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>
+Date:   Sat Apr 18 07:16:08 2026 +0000
+
+    feat: add Google and GitHub OAuth authentication
+    
+    Agent-Logs-Url: https://github.com/ArnavPundir22/QR-Code-Generator/sessions/c2d0d80a-06ef-490a-ac3a-006da87a6ea7
+    
+    Co-authored-by: ArnavPundir22 <179984094+ArnavPundir22@users.noreply.github.com>
+
+[33mcommit 4f391bd2de8fc24aa493f31d28be45f542a16bcf[m
+Author: copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>
+Date:   Sat Apr 18 07:07:25 2026 +0000
+
+    fix: improve shorten endpoint validation and error handling per review
+    
+    Agent-Logs-Url: https://github.com/ArnavPundir22/QR-Code-Generator/sessions/297c0bd2-850d-48de-a1c2-dbb88f03ecb1
+    
+    Co-authored-by: ArnavPundir22 <179984094+ArnavPundir22@users.noreply.github.com>
+
+[33mcommit 8f246ff8002817bc68c592e0a43cb334518457b4[m
+Author: copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>
+Date:   Sat Apr 18 07:05:51 2026 +0000
+
+    feat: add link shortener, circular logo mask, and logo preview
+    
+    Agent-Logs-Url: https://github.com/ArnavPundir22/QR-Code-Generator/sessions/297c0bd2-850d-48de-a1c2-dbb88f03ecb1
+    
+    Co-authored-by: ArnavPundir22 <179984094+ArnavPundir22@users.noreply.github.com>
+
+[33mcommit a5d53ea48b1bf016a294ad096f1f33b938b4e6cd[m
+Merge: 4d0394b f73d7b4
+Author: Arnav Pundir <arnavp128@gmail.com>
+Date:   Sat Apr 18 11:41:37 2026 +0530
+
+    Merge pull request #2 from ArnavPundir22/copilot/create-readme-file
+    
+    Add README.md
+
+[33mcommit f73d7b4c43de9b898a9ad82ed6685be7db2bc0c3[m
+Author: copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>
+Date:   Sat Apr 18 06:06:21 2026 +0000
+
+    Add README.md for QR Code Generator project
+    
+    Agent-Logs-Url: https://github.com/ArnavPundir22/QR-Code-Generator/sessions/c283c1db-9361-4847-984a-f444d6934078
+    
+    Co-authored-by: ArnavPundir22 <179984094+ArnavPundir22@users.noreply.github.com>
+
+[33mcommit 4d0394bef9015f80fbf6480feff9ba055ff7dbb5[m
+Merge: b594d60 ff0714a
+Author: Arnav Pundir <arnavp128@gmail.com>
+Date:   Sat Apr 18 08:50:38 2026 +0530
+
+    Merge pull request #1 from ArnavPundir22/copilot/create-modern-ui-design
+    
+    Add modern web UI for QR Code Generator
+
+[33mcommit ff0714a3ecea4e6814ae38a258d74951bbc28875[m
+Author: copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>
+Date:   Sat Apr 18 03:15:27 2026 +0000
+
+    Add modern web UI for QR Code Generator
+    
+    Agent-Logs-Url: https://github.com/ArnavPundir22/QR-Code-Generator/sessions/909078de-35c9-447a-89e8-4d5d55c6cf7f
+    
+    Co-authored-by: ArnavPundir22 <179984094+ArnavPundir22@users.noreply.github.com>
+
+[33mcommit b594d60bd3ae408044700d1e777afb3ad336dfec[m
+Author: ArnavPundir22 <arnavp128@gmail.com>
+Date:   Sun Feb 15 21:36:26 2026 +0530
+
+    inital commit for repo initialization
