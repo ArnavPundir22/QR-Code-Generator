@@ -218,7 +218,13 @@ def generate():
 
 
 def _is_safe_url_host(url: str) -> bool:
-    """Return False if the URL resolves to a private/loopback/reserved address."""
+    """Check whether a URL's hostname resolves to a public, routable IP address.
+
+    Returns False (unsafe) if the hostname resolves to any private, loopback,
+    link-local, multicast, or otherwise reserved IP address, blocking SSRF
+    attacks that attempt to reach internal services. Returns True only when
+    every resolved address is globally routable.
+    """
     try:
         parsed = urllib.parse.urlparse(url)
         hostname = parsed.hostname
@@ -227,7 +233,8 @@ def _is_safe_url_host(url: str) -> bool:
         addr = socket.getaddrinfo(hostname, None, proto=socket.IPPROTO_TCP)
         for item in addr:
             ip = ipaddress.ip_address(item[4][0])
-            if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
+            if (ip.is_private or ip.is_loopback or ip.is_link_local
+                    or ip.is_reserved or ip.is_multicast):
                 return False
         return True
     except Exception:
