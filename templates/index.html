@@ -249,72 +249,13 @@
 
     </main>
 
-    <!-- Render Instance Keep-Alive Awakening Monitor -->
-    <section class="card keepalive-card" aria-label="Render Instance Keep-Alive Awakening Status">
-      <div class="keepalive-header">
-        <div class="keepalive-title-group">
-          <span class="status-indicator-dot pulse-green" id="keepAliveDot"></span>
-          <div>
-            <h3 class="keepalive-title">Render Live Link Keep-Alive</h3>
-            <p class="keepalive-subtitle">Prevent Render free web services from spinning down due to inactivity</p>
-          </div>
-        </div>
-        <div class="keepalive-badges">
-          <span class="badge badge-awake" id="keepAliveBadge">🟢 Server Awake</span>
-          <span class="badge badge-latency" id="keepAliveLatency">-- ms</span>
-        </div>
-      </div>
-
-      <div class="keepalive-controls">
-        <div class="field keepalive-url-field">
-          <label class="field-label" for="keepAliveUrlInput">Live Deployment URL</label>
-          <div class="input-wrapper">
-            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-            <input
-              type="url"
-              id="keepAliveUrlInput"
-              class="input"
-              placeholder="https://your-qr-app.onrender.com"
-              autocomplete="off"
-            />
-          </div>
-        </div>
-        <div class="keepalive-actions">
-          <button type="button" class="btn-secondary" id="saveKeepAliveUrlBtn">Save Link</button>
-          <button type="button" class="btn-primary-sm" id="pingNowBtn">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-            <span>Ping Live Link</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="keepalive-footer-row">
-        <label class="toggle-switch-label">
-          <input type="checkbox" id="autoPingToggle" checked />
-          <span class="toggle-slider"></span>
-          <span class="toggle-text">Auto Keep-Alive Awake Callback (Pings every 5 mins)</span>
-        </label>
-        <span class="last-ping-text" id="lastPingTimeText">Last ping callback: Never</span>
-      </div>
-
-      <!-- Ping Logs Feed -->
-      <div class="keepalive-logs-wrap">
-        <div class="logs-header">
-          <span>Live Awakening Callback Activity Log</span>
-          <button type="button" class="btn-text-sm" id="clearLogsBtn">Clear</button>
-        </div>
-        <div class="logs-list" id="pingLogsList">
-          <div class="log-item log-info">System initialized. Ready for status check callbacks.</div>
-        </div>
-      </div>
-    </section>
-
     <footer class="footer">
-      Built with <span class="heart">♥</span> using Python &amp; Flask &nbsp;·&nbsp; PWA Installed &amp; Render Awake Support &nbsp;·&nbsp; Level&nbsp;H Error Correction
+      Built with <span class="heart">♥</span> using Python &amp; Flask &nbsp;·&nbsp; Level&nbsp;H Error Correction
     </footer>
   </div>
 
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
+
 

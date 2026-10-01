@@ -15,7 +15,12 @@ start_time = time.time()
 
 class KeepAliveWorker:
     def __init__(self):
-        self.live_url = os.getenv("RENDER_EXTERNAL_URL") or os.getenv("LIVE_LINK") or os.getenv("KEEP_ALIVE_URL") or ""
+        self.live_url = (
+            os.getenv("RENDER_EXTERNAL_URL")
+            or os.getenv("LIVE_LINK")
+            or os.getenv("KEEP_ALIVE_URL")
+            or "https://qr-code-generator-bq3d.onrender.com"
+        )
         self.interval = 600  # 10 minutes in seconds (Render spins down after 15 mins of inactivity)
         self.enabled = True
         self.last_ping_time = None
