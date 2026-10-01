@@ -608,12 +608,22 @@ body {
 .footer {
   margin-top: 40px;
   text-align: center;
-  font-size: 0.8rem;
-  color: var(--text-faint);
+  font-size: 0.85rem;
+  color: var(--text-muted);
   letter-spacing: 0.03em;
 }
 
-.heart { color: var(--error); }
+.footer a {
+  color: var(--accent-2);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color var(--transition);
+}
+
+.footer a:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
 
 /* =========================================================
    Logo field toggle animation
