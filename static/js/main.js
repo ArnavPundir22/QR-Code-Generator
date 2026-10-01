@@ -263,6 +263,16 @@
     generateBtnText.textContent = 'Generating…';
 
     const formData = new FormData(form);
+    const linkVal = linkInput.value.trim();
+    const mode = modeInput.value;
+
+    // Standard mode offline fallback check
+    if (!navigator.onLine && mode === 'standard' && typeof QRCode === 'function') {
+      generateOffline(linkVal);
+      generateBtn.disabled = false;
+      generateBtnText.textContent = 'Generate QR Code';
+      return;
+    }
 
     try {
       const response = await fetch('/generate', { method: 'POST', body: formData });
@@ -276,19 +286,51 @@
 
       const src = 'data:image/png;base64,' + data.image;
       qrImage.src = src;
-      qrCaption.textContent = linkInput.value.trim();
+      qrCaption.textContent = linkVal;
       downloadBtn.classList.remove('hidden');
       downloadBtn.onclick = () => downloadImage(src);
       showState('result');
 
-    } catch {
-      showState('error');
-      errorMsg.textContent = 'Could not reach the server. Please try again.';
+    } catch (err) {
+      if (mode === 'standard' && typeof QRCode === 'function') {
+        generateOffline(linkVal);
+      } else {
+        showState('error');
+        errorMsg.textContent = mode === 'logo'
+          ? 'Logo QR mode requires an online server connection.'
+          : 'Could not reach the server. Please check your connection.';
+      }
     } finally {
       generateBtn.disabled = false;
       generateBtnText.textContent = 'Generate QR Code';
     }
   });
+
+  // ── Client-side Offline QR Generation Fallback ────────────
+  function generateOffline(text) {
+    try {
+      const fill = fillColor.value || '#000000';
+      const back = backColor.value || '#ffffff';
+      const box = parseInt(boxSize.value, 10) || 10;
+      const bdr = parseInt(borderSize.value, 10) || 4;
+
+      const dataUrl = QRCode(text, {
+        fillColor: fill,
+        backColor: back,
+        boxSize: box,
+        border: bdr
+      });
+
+      qrImage.src = dataUrl;
+      qrCaption.textContent = text + ' ⚡ (Offline)';
+      downloadBtn.classList.remove('hidden');
+      downloadBtn.onclick = () => downloadImage(dataUrl);
+      showState('result');
+    } catch (err) {
+      showState('error');
+      errorMsg.textContent = 'Could not generate QR code offline: ' + err.message;
+    }
+  }
 
   // ── Validation ────────────────────────────────────────────
   function validate() {

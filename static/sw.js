@@ -2,11 +2,12 @@
    QR Code Generator – Service Worker (sw.js)
    ========================================================= */
 
-const CACHE_NAME = 'qr-generator-v1';
+const CACHE_NAME = 'qr-generator-v2';
 
 const PRECACHE_ASSETS = [
   '/',
   '/static/css/style.css',
+  '/static/js/qrcode.min.js',
   '/static/js/main.js',
   '/manifest.json',
   '/static/icons/favicon.png',
