@@ -51,6 +51,56 @@
   const qrImage            = document.getElementById('qrImage');
   const qrCaption          = document.getElementById('qrCaption');
 
+  // PWA Install Button
+  const installAppBtn      = document.getElementById('installAppBtn');
+
+  // Keep-Alive refs
+  const keepAliveDot       = document.getElementById('keepAliveDot');
+  const keepAliveBadge     = document.getElementById('keepAliveBadge');
+  const keepAliveLatency   = document.getElementById('keepAliveLatency');
+  const keepAliveUrlInput  = document.getElementById('keepAliveUrlInput');
+  const saveKeepAliveUrlBtn= document.getElementById('saveKeepAliveUrlBtn');
+  const pingNowBtn         = document.getElementById('pingNowBtn');
+  const autoPingToggle     = document.getElementById('autoPingToggle');
+  const lastPingTimeText   = document.getElementById('lastPingTimeText');
+  const pingLogsList       = document.getElementById('pingLogsList');
+  const clearLogsBtn       = document.getElementById('clearLogsBtn');
+
+  // ── PWA Service Worker Registration ───────────────────────
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then((reg) => console.log('PWA Service Worker registered:', reg.scope))
+        .catch((err) => console.error('PWA Service Worker registration failed:', err));
+    });
+  }
+
+  // ── PWA Install Prompt Handler ────────────────────────────
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (installAppBtn) installAppBtn.classList.remove('hidden');
+  });
+
+  if (installAppBtn) {
+    installAppBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        console.log('User installed the PWA application');
+      }
+      deferredPrompt = null;
+      installAppBtn.classList.add('hidden');
+    });
+  }
+
+  window.addEventListener('appinstalled', () => {
+    console.log('PWA installed successfully');
+    if (installAppBtn) installAppBtn.classList.add('hidden');
+  });
+
   // ── Theme toggle ─────────────────────────────────────────
   const savedTheme = localStorage.getItem('theme') || 'dark';
   applyTheme(savedTheme);
@@ -65,6 +115,10 @@
   function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     themeIcon.textContent = theme === 'dark' ? '🌙' : '☀️';
+    const metaThemeColor = document.getElementById('metaThemeColor');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', theme === 'dark' ? '#0f172a' : '#f8fafc');
+    }
   }
 
   // ── Mode tabs ─────────────────────────────────────────────
@@ -284,5 +338,186 @@
     if (linkInput.value.trim()) linkError.textContent = '';
   });
 
+  // ── Render Instance Keep-Alive Awakening System ───────────
+  let keepAliveIntervalId = null;
+
+  // Initialize saved live URL from localStorage or current window origin
+  const savedLiveUrl = localStorage.getItem('live_url') || window.location.origin;
+  if (keepAliveUrlInput) {
+    keepAliveUrlInput.value = savedLiveUrl;
+  }
+
+  // Fetch backend keep-alive state on launch
+  initKeepAlive();
+
+  async function initKeepAlive() {
+    try {
+      const res = await fetch('/api/keep-alive');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.live_url && keepAliveUrlInput) {
+          keepAliveUrlInput.value = data.live_url;
+          localStorage.setItem('live_url', data.live_url);
+        } else {
+          // Sync frontend origin to backend
+          updateBackendLiveUrl(savedLiveUrl);
+        }
+        if (data.logs && data.logs.length > 0) {
+          renderLogs(data.logs);
+        }
+      }
+    } catch (err) {
+      console.warn('Could not fetch server keep-alive status:', err);
+    }
+    // Run an initial ping check
+    pingLiveLink();
+    startKeepAliveLoop();
+  }
+
+  async function updateBackendLiveUrl(url) {
+    try {
+      await fetch('/api/keep-alive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set_url', live_url: url })
+      });
+    } catch (err) {
+      console.error('Failed to update backend live URL:', err);
+    }
+  }
+
+  async function pingLiveLink() {
+    const targetUrl = (keepAliveUrlInput ? keepAliveUrlInput.value.trim() : '') || window.location.origin;
+    const pingEndpoint = targetUrl.rstrip ? targetUrl.rstrip('/') + '/ping' : targetUrl.replace(/\/+$/, '') + '/ping';
+
+    // Update UI to pinging state
+    setAwakeStatus('pinging', 'Pinging…');
+
+    const startTs = performance.now();
+    const timeStr = new Date().toLocaleTimeString();
+
+    try {
+      const res = await fetch('/ping?cachebust=' + Date.now());
+      const endTs = performance.now();
+      const latencyMs = Math.round(endTs - startTs);
+
+      if (res.ok) {
+        setAwakeStatus('awake', '🟢 Server Awake', latencyMs);
+        addLogEntry({
+          time: timeStr,
+          status: res.status + ' OK',
+          latency_ms: latencyMs,
+          success: true,
+          url: pingEndpoint
+        });
+      } else {
+        setAwakeStatus('error', '🔴 Status ' + res.status, latencyMs);
+        addLogEntry({
+          time: timeStr,
+          status: 'HTTP ' + res.status,
+          latency_ms: latencyMs,
+          success: false,
+          url: pingEndpoint
+        });
+      }
+    } catch (err) {
+      const endTs = performance.now();
+      const latencyMs = Math.round(endTs - startTs);
+      setAwakeStatus('error', '🔴 Offline / Error', latencyMs);
+      addLogEntry({
+        time: timeStr,
+        status: err.message || 'Network Failure',
+        latency_ms: latencyMs,
+        success: false,
+        url: pingEndpoint
+      });
+    }
+  }
+
+  function setAwakeStatus(state, badgeText, latencyMs) {
+    if (keepAliveBadge) keepAliveBadge.textContent = badgeText;
+    if (keepAliveLatency && latencyMs !== undefined) keepAliveLatency.textContent = latencyMs + ' ms';
+    if (lastPingTimeText) lastPingTimeText.textContent = 'Last ping callback: ' + new Date().toLocaleTimeString();
+
+    if (keepAliveDot) {
+      keepAliveDot.className = 'status-indicator-dot ';
+      if (state === 'awake') keepAliveDot.classList.add('pulse-green');
+      else if (state === 'pinging') keepAliveDot.classList.add('pulse-amber');
+      else keepAliveDot.classList.add('pulse-red');
+    }
+  }
+
+  function addLogEntry(entry) {
+    if (!pingLogsList) return;
+    const item = document.createElement('div');
+    item.className = 'log-item ' + (entry.success ? 'log-success' : 'log-error');
+    item.innerHTML = `
+      <span class="log-time">${entry.time}</span>
+      <span class="log-status">${entry.status}</span>
+      <span class="log-latency">${entry.latency_ms}ms</span>
+      <span class="log-url">${entry.url}</span>
+    `;
+    pingLogsList.insertBefore(item, pingLogsList.firstChild);
+
+    // Keep max 15 log items in UI
+    while (pingLogsList.children.length > 15) {
+      pingLogsList.removeChild(pingLogsList.lastChild);
+    }
+  }
+
+  function renderLogs(logs) {
+    if (!pingLogsList) return;
+    pingLogsList.innerHTML = '';
+    logs.forEach(log => {
+      addLogEntry({
+        time: log.time,
+        status: log.success ? (log.status + ' OK') : log.status,
+        latency_ms: log.latency_ms,
+        success: log.success,
+        url: log.url
+      });
+    });
+  }
+
+  function startKeepAliveLoop() {
+    if (keepAliveIntervalId) clearInterval(keepAliveIntervalId);
+    if (autoPingToggle && autoPingToggle.checked) {
+      // Ping every 5 minutes (300,000 ms) to keep Render service awake
+      keepAliveIntervalId = setInterval(() => {
+        pingLiveLink();
+      }, 300000);
+    }
+  }
+
+  if (saveKeepAliveUrlBtn) {
+    saveKeepAliveUrlBtn.addEventListener('click', () => {
+      const url = keepAliveUrlInput ? keepAliveUrlInput.value.trim() : '';
+      if (url) {
+        localStorage.setItem('live_url', url);
+        updateBackendLiveUrl(url);
+        pingLiveLink();
+      }
+    });
+  }
+
+  if (pingNowBtn) {
+    pingNowBtn.addEventListener('click', () => {
+      pingLiveLink();
+    });
+  }
+
+  if (autoPingToggle) {
+    autoPingToggle.addEventListener('change', () => {
+      startKeepAliveLoop();
+    });
+  }
+
+  if (clearLogsBtn && pingLogsList) {
+    clearLogsBtn.addEventListener('click', () => {
+      pingLogsList.innerHTML = '<div class="log-item log-info">Logs cleared.</div>';
+    });
+  }
+
 })();
+
 

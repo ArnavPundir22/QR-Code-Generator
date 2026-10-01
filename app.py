@@ -1,12 +1,89 @@
 import io
 import base64
+import os
+import time
+import threading
 import urllib.request
 import urllib.parse
 import qrcode
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 from PIL import Image, ImageDraw
 
 app = Flask(__name__)
+start_time = time.time()
+
+
+class KeepAliveWorker:
+    def __init__(self):
+        self.live_url = os.getenv("RENDER_EXTERNAL_URL") or os.getenv("LIVE_LINK") or os.getenv("KEEP_ALIVE_URL") or ""
+        self.interval = 600  # 10 minutes in seconds (Render spins down after 15 mins of inactivity)
+        self.enabled = True
+        self.last_ping_time = None
+        self.last_status = "idle"
+        self.ping_count = 0
+        self.ping_logs = []
+        self._thread = None
+        self._running = False
+
+    def start(self):
+        if not self._running:
+            self._running = True
+            self._thread = threading.Thread(target=self._loop, daemon=True)
+            self._thread.start()
+
+    def _loop(self):
+        while self._running:
+            time.sleep(10)
+            if self.enabled and self.live_url:
+                now = time.time()
+                if self.last_ping_time is None or (now - self.last_ping_time) >= self.interval:
+                    self.ping_now()
+
+    def ping_now(self):
+        if not self.live_url:
+            return {"status": "error", "message": "No live URL configured"}
+
+        target = self.live_url.rstrip("/") + "/ping"
+        start_ts = time.time()
+        try:
+            req = urllib.request.Request(
+                target,
+                headers={"User-Agent": "Render-KeepAlive-Bot/1.0"}
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                code = resp.getcode()
+                latency_ms = round((time.time() - start_ts) * 1000, 2)
+                self.last_ping_time = time.time()
+                self.ping_count += 1
+                self.last_status = f"success ({code})"
+                log_entry = {
+                    "time": time.strftime("%H:%M:%S", time.localtime()),
+                    "url": target,
+                    "status": code,
+                    "latency_ms": latency_ms,
+                    "success": True
+                }
+                self.ping_logs.insert(0, log_entry)
+                self.ping_logs = self.ping_logs[:20]
+                return {"status": "ok", "log": log_entry}
+        except Exception as e:
+            latency_ms = round((time.time() - start_ts) * 1000, 2)
+            self.last_ping_time = time.time()
+            self.last_status = f"failed ({str(e)})"
+            log_entry = {
+                "time": time.strftime("%H:%M:%S", time.localtime()),
+                "url": target,
+                "status": str(e),
+                "latency_ms": latency_ms,
+                "success": False
+            }
+            self.ping_logs.insert(0, log_entry)
+            self.ping_logs = self.ping_logs[:20]
+            return {"status": "error", "log": log_entry}
+
+
+keep_alive_worker = KeepAliveWorker()
+keep_alive_worker.start()
 
 
 def generate_standard_qr(link, fill_color, back_color, box_size, border):
@@ -68,6 +145,58 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/manifest.json")
+def manifest():
+    return send_from_directory("static", "manifest.json", mimetype="application/manifest+json")
+
+
+@app.route("/sw.js")
+def service_worker():
+    response = send_from_directory("static", "sw.js", mimetype="text/javascript")
+    response.headers["Service-Worker-Allowed"] = "/"
+    return response
+
+
+@app.route("/favicon.ico")
+def favicon():
+    return send_from_directory("static/icons", "favicon.png", mimetype="image/png")
+
+
+@app.route("/ping")
+def ping():
+    return jsonify({
+        "status": "awake",
+        "message": "Render instance is active and awake",
+        "timestamp": time.time(),
+        "uptime_seconds": round(time.time() - start_time, 2)
+    })
+
+
+@app.route("/api/keep-alive", methods=["GET", "POST"])
+def keep_alive_api():
+    if request.method == "POST":
+        data = request.get_json(silent=True) or {}
+        action = data.get("action")
+        if action == "set_url" or "live_url" in data:
+            new_url = data.get("live_url", "").strip()
+            keep_alive_worker.live_url = new_url
+        if data.get("enabled") is not None:
+            keep_alive_worker.enabled = bool(data.get("enabled"))
+        if action == "ping_now":
+            res = keep_alive_worker.ping_now()
+            return jsonify(res)
+
+    return jsonify({
+        "live_url": keep_alive_worker.live_url,
+        "enabled": keep_alive_worker.enabled,
+        "interval_seconds": keep_alive_worker.interval,
+        "ping_count": keep_alive_worker.ping_count,
+        "last_ping_time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(keep_alive_worker.last_ping_time)) if keep_alive_worker.last_ping_time else None,
+        "last_status": keep_alive_worker.last_status,
+        "logs": keep_alive_worker.ping_logs
+    })
+
+
 @app.route("/generate", methods=["POST"])
 def generate():
     try:
@@ -124,3 +253,4 @@ def shorten():
 
 if __name__ == "__main__":
     app.run(debug=False)
+
