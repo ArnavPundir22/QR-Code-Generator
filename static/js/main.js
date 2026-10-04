@@ -167,10 +167,13 @@
   });
 
   // ── Logo preview helpers ──────────────────────────────────
+  // ── Logo preview helpers ──────────────────────────────────
   function showLogoPreview(file) {
     const reader = new FileReader();
     reader.onload = (e) => {
       logoPreview.src = e.target.result;
+      const logoPreviewName = document.getElementById('logoPreviewName');
+      if (logoPreviewName) logoPreviewName.textContent = file.name;
       fileDropText.textContent = file.name;
       logoPreviewWrap.classList.remove('hidden');
     };
@@ -181,7 +184,7 @@
     logoInput.value = '';
     logoPreview.src = '';
     logoPreviewWrap.classList.add('hidden');
-    fileDropText.textContent = 'Click or drag an image here';
+    fileDropText.textContent = 'Upload custom image (Optional)';
   }
 
   logoPreviewRemove.addEventListener('click', (e) => {
@@ -253,21 +256,56 @@
     });
   });
 
+  // ── Dynamic Loader Status Messages ─────────────────────────
+  const loaderStatus = document.getElementById('loaderStatus');
+  let statusInterval = null;
+
+  function startLoaderAnimation(mode) {
+    showState('loading');
+    const messages = mode === 'logo' ? [
+      'Scanning URL & Data stream…',
+      'Building Level H Error Correction Matrix…',
+      'Embedding Official D-Coders Squad Emblem…',
+      'Finalizing High-Res Squad QR Code…'
+    ] : [
+      'Reading Input Link…',
+      'Generating Custom Matrix Grid…',
+      'Applying Color Palette…',
+      'Rendering QR Code Image…'
+    ];
+
+    let idx = 0;
+    if (loaderStatus) loaderStatus.textContent = messages[0];
+    if (statusInterval) clearInterval(statusInterval);
+    statusInterval = setInterval(() => {
+      idx = (idx + 1) % messages.length;
+      if (loaderStatus) loaderStatus.textContent = messages[idx];
+    }, 450);
+  }
+
+  function stopLoaderAnimation() {
+    if (statusInterval) {
+      clearInterval(statusInterval);
+      statusInterval = null;
+    }
+  }
+
   // ── Form submission ───────────────────────────────────────
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!validate()) return;
 
-    showState('loading');
-    generateBtn.disabled = true;
-    generateBtnText.textContent = 'Generating…';
-
     const formData = new FormData(form);
     const linkVal = linkInput.value.trim();
     const mode = modeInput.value;
 
+    startLoaderAnimation(mode);
+    generateBtn.disabled = true;
+    generateBtnText.textContent = 'Generating…';
+
     // Standard mode offline fallback check
     if (!navigator.onLine && mode === 'standard' && typeof QRCode === 'function') {
+      stopLoaderAnimation();
       generateOffline(linkVal);
       generateBtn.disabled = false;
       generateBtnText.textContent = 'Generate QR Code';
@@ -277,6 +315,8 @@
     try {
       const response = await fetch('/generate', { method: 'POST', body: formData });
       const data = await response.json();
+
+      stopLoaderAnimation();
 
       if (!response.ok || data.error) {
         showState('error');
@@ -292,6 +332,7 @@
       showState('result');
 
     } catch (err) {
+      stopLoaderAnimation();
       if (mode === 'standard' && typeof QRCode === 'function') {
         generateOffline(linkVal);
       } else {
@@ -341,11 +382,6 @@
     if (!linkInput.value.trim()) {
       linkError.textContent = 'Please enter a URL or text to encode.';
       linkInput.focus();
-      valid = false;
-    }
-
-    if (modeInput.value === 'logo' && (!logoInput.files || logoInput.files.length === 0)) {
-      logoError.textContent = 'Please upload a logo image.';
       valid = false;
     }
 

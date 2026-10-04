@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>QR Code Generator - PWA & Render Keep-Alive</title>
+  <title>D-Coders Squad - QR Code Generator</title>
 
   <!-- PWA & Mobile Web Meta Tags -->
   <meta name="theme-color" content="#0f172a" id="metaThemeColor" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="QR Generator" />
-  <meta name="description" content="Create beautiful, customised QR codes instantly with logo support & Render live link keep-alive awakening callback." />
+  <meta name="apple-mobile-web-app-title" content="DCoders QR" />
+  <meta name="description" content="Official QR Code Generator dedicated to D-Coders Squad Competitive Coding Group with built-in logo embedding." />
 
   <!-- Manifest & Icons -->
   <link rel="manifest" href="/manifest.json" />
@@ -20,37 +20,33 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
 </head>
 <body>
 
-  <!-- Animated background blobs -->
+  <!-- Animated background blobs & floating logos -->
   <div class="bg-blob blob-1"></div>
   <div class="bg-blob blob-2"></div>
   <div class="bg-blob blob-3"></div>
+  
+  <div class="bg-logo-float bg-logo-1">
+    <img src="{{ url_for('static', filename='icons/dc_logo.png') }}" alt="Ambient Squad Logo" />
+  </div>
+  <div class="bg-logo-float bg-logo-2">
+    <img src="{{ url_for('static', filename='icons/dc_logo.png') }}" alt="Ambient Squad Logo" />
+  </div>
 
   <div class="container">
 
     <!-- Header -->
     <header class="header">
       <div class="logo-mark">
-        <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <rect x="2" y="2" width="16" height="16" rx="2" stroke="currentColor" stroke-width="2.5"/>
-          <rect x="6" y="6" width="8" height="8" fill="currentColor"/>
-          <rect x="22" y="2" width="16" height="16" rx="2" stroke="currentColor" stroke-width="2.5"/>
-          <rect x="26" y="6" width="8" height="8" fill="currentColor"/>
-          <rect x="2" y="22" width="16" height="16" rx="2" stroke="currentColor" stroke-width="2.5"/>
-          <rect x="6" y="26" width="8" height="8" fill="currentColor"/>
-          <rect x="22" y="22" width="6" height="6" fill="currentColor"/>
-          <rect x="32" y="22" width="6" height="6" fill="currentColor"/>
-          <rect x="22" y="32" width="6" height="6" fill="currentColor"/>
-          <rect x="32" y="32" width="6" height="6" fill="currentColor"/>
-        </svg>
+        <img src="{{ url_for('static', filename='icons/dc_logo.png') }}" alt="D-Coders Squad Logo" class="header-logo-img" />
       </div>
       <div class="header-info">
-        <h1 class="header-title">QR Code Generator</h1>
-        <p class="header-subtitle">Create beautiful, customised QR codes instantly</p>
+        <h1 class="header-title">D-Coders Squad <span class="badge-tag">QR Hub</span></h1>
+        <p class="header-subtitle">Official QR Generator for D-Coders Squad • Competitive Coding Group</p>
       </div>
       <div class="header-actions">
         <button class="btn-install hidden" id="installAppBtn" aria-label="Install App PWA">
@@ -77,7 +73,7 @@
           </button>
           <button class="tab" id="tab-logo" role="tab" aria-selected="false" data-mode="logo">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
-            With Logo
+            With Squad Logo
           </button>
         </div>
 
@@ -94,7 +90,7 @@
                 id="linkInput"
                 name="link"
                 class="input"
-                placeholder="https://example.com or any text…"
+                placeholder="https://example.com or competitive coding link…"
                 autocomplete="off"
                 spellcheck="false"
                 aria-required="true"
@@ -110,19 +106,35 @@
             <span class="field-error" id="linkError" role="alert"></span>
           </div>
 
-          <!-- Logo upload (Logo mode only) -->
+          <!-- Logo selection (Logo mode only) -->
           <div class="field logo-field hidden" id="logoField">
-            <label class="field-label" for="logoInput">Logo Image</label>
+            <label class="field-label">Logo Image</label>
+            
+            <!-- Default D-Coders Squad Logo Card -->
+            <div class="default-logo-card" id="defaultLogoCard">
+              <img src="{{ url_for('static', filename='icons/dc_logo.png') }}" alt="D-Coders Squad Logo" class="default-logo-img" />
+              <div class="default-logo-details">
+                <span class="default-logo-title">D-Coders Squad Logo</span>
+                <span class="default-logo-sub">Official Squad emblem active by default</span>
+              </div>
+              <span class="default-logo-badge">Active</span>
+            </div>
+
             <label class="file-drop" id="fileDrop" for="logoInput">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              <span class="file-drop-text" id="fileDropText">Click or drag an image here</span>
-              <span class="file-drop-hint">PNG, JPG, SVG — transparent logos work best</span>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span class="file-drop-text" id="fileDropText">Upload custom image (Optional)</span>
+              <span class="file-drop-hint">PNG, JPG, SVG — Leave empty to use D-Coders Squad logo</span>
               <input type="file" id="logoInput" name="logo" accept="image/*" class="visually-hidden" />
             </label>
+            
             <!-- Circular logo preview -->
             <div class="logo-preview-wrap hidden" id="logoPreviewWrap">
               <img id="logoPreview" src="" alt="Logo preview" class="logo-preview-img" />
-              <button type="button" class="logo-preview-remove" id="logoPreviewRemove" aria-label="Remove logo">✕</button>
+              <div class="logo-preview-info">
+                <span class="logo-preview-name" id="logoPreviewName">Custom Logo</span>
+                <span class="logo-preview-sub">Selected for QR center</span>
+              </div>
+              <button type="button" class="logo-preview-remove" id="logoPreviewRemove" aria-label="Reset to D-Coders logo">✕</button>
             </div>
             <span class="field-error" id="logoError" role="alert"></span>
           </div>
@@ -132,15 +144,15 @@
             <div class="field">
               <label class="field-label" for="fillColor">Foreground</label>
               <div class="color-picker-wrapper">
-                <input type="color" id="fillColor" name="fill_color" value="#000000" class="color-input" aria-label="Foreground colour" />
-                <span class="color-value" id="fillColorValue">#000000</span>
+                <input type="color" id="fillColor" name="fill_color" value="#00d2ff" class="color-input" aria-label="Foreground colour" />
+                <span class="color-value" id="fillColorValue">#00d2ff</span>
               </div>
             </div>
             <div class="field">
               <label class="field-label" for="backColor">Background</label>
               <div class="color-picker-wrapper">
-                <input type="color" id="backColor" name="back_color" value="#ffffff" class="color-input" aria-label="Background colour" />
-                <span class="color-value" id="backColorValue">#ffffff</span>
+                <input type="color" id="backColor" name="back_color" value="#0f172a" class="color-input" aria-label="Background colour" />
+                <span class="color-value" id="backColorValue">#0f172a</span>
               </div>
             </div>
           </div>
@@ -167,23 +179,20 @@
           <div class="field">
             <span class="field-label">Colour Presets</span>
             <div class="presets">
+              <button type="button" class="preset" data-fill="#00d2ff" data-back="#0f172a" aria-label="D-Coders Squad Theme">
+                <span class="preset-swatch" style="background:#00d2ff;border-color:#ff5528"></span>D-Coders
+              </button>
+              <button type="button" class="preset" data-fill="#ff5528" data-back="#0b0f19" aria-label="Squad Orange Theme">
+                <span class="preset-swatch" style="background:#ff5528;border-color:#00d2ff"></span>Orange
+              </button>
               <button type="button" class="preset" data-fill="#000000" data-back="#ffffff" aria-label="Classic black on white">
                 <span class="preset-swatch" style="background:#000;border-color:#e0e0e0"></span>Classic
               </button>
               <button type="button" class="preset" data-fill="#6c47ff" data-back="#f0ecff" aria-label="Purple theme">
                 <span class="preset-swatch" style="background:#6c47ff"></span>Violet
               </button>
-              <button type="button" class="preset" data-fill="#0ea5e9" data-back="#e0f4ff" aria-label="Sky blue theme">
-                <span class="preset-swatch" style="background:#0ea5e9"></span>Sky
-              </button>
               <button type="button" class="preset" data-fill="#10b981" data-back="#d1fae5" aria-label="Emerald green theme">
                 <span class="preset-swatch" style="background:#10b981"></span>Emerald
-              </button>
-              <button type="button" class="preset" data-fill="#f43f5e" data-back="#ffe4e6" aria-label="Rose red theme">
-                <span class="preset-swatch" style="background:#f43f5e"></span>Rose
-              </button>
-              <button type="button" class="preset" data-fill="#f59e0b" data-back="#fef3c7" aria-label="Amber yellow theme">
-                <span class="preset-swatch" style="background:#f59e0b"></span>Amber
               </button>
             </div>
           </div>
@@ -226,10 +235,20 @@
           <p class="placeholder-hint">Enter a URL and click Generate</p>
         </div>
 
-        <!-- Loading state -->
+        <!-- Loading state with Animated D-Coders Squad Scanner -->
         <div class="preview-loading hidden" id="previewLoading" aria-live="polite" aria-label="Generating QR code">
-          <div class="spinner"></div>
-          <p>Generating…</p>
+          <div class="dc-loader-container">
+            <div class="dc-loader-glow"></div>
+            <div class="dc-loader-rings">
+              <div class="ring ring-outer"></div>
+              <div class="ring ring-inner"></div>
+            </div>
+            <div class="dc-loader-logo-wrap">
+              <img src="{{ url_for('static', filename='icons/dc_logo.png') }}" alt="D-Coders Loader Logo" class="dc-loader-logo" />
+              <div class="dc-scan-line"></div>
+            </div>
+          </div>
+          <p class="dc-loader-status" id="loaderStatus">Initializing D-Coders QR Matrix…</p>
         </div>
 
         <!-- Error state -->
@@ -250,7 +269,7 @@
     </main>
 
     <footer class="footer">
-      Built by <a href="https://arnavpundir22.github.io" target="_blank" rel="noopener noreferrer">Arnav Pundir</a>
+      Dedicated to <strong>D-Coders Squad</strong> • Built by <a href="https://arnavpundir22.github.io" target="_blank" rel="noopener noreferrer">Arnav Pundir</a>
     </footer>
   </div>
 

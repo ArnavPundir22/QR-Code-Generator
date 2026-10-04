@@ -1,7 +1,7 @@
 {
-  "name": "QR Code Generator",
-  "short_name": "QR Gen",
-  "description": "Create beautiful, customised QR codes instantly with logo support & Render keep-alive callback",
+  "name": "D-Coders Squad QR Generator",
+  "short_name": "DCoders QR",
+  "description": "Official QR Code Generator dedicated to D-Coders Squad Competitive Coding Group with built-in logo embedding.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

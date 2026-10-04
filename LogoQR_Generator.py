@@ -50,7 +50,7 @@ def create_qr_with_logo(link, logo_path, output_filename="logo.png"):
 
 # --- usage ---
 link = "https://forms.gle/nkZ3AqU9aKpCe8e9A"
-# Make sure to rename your uploaded file to 'logo.png' or update the name below
-logo_filename = "unnamed.png"
+# Default logo is D-Coders Squad logo
+logo_filename = "static/icons/dc_logo.png"
 
 create_qr_with_logo(link, logo_filename)

@@ -105,15 +105,20 @@ def generate_standard_qr(link, fill_color, back_color, box_size, border):
 
 
 def make_circle_logo(logo: Image.Image, size: int) -> Image.Image:
-    """Resize logo to a square and apply a circular mask, returning an RGBA image."""
+    """Resize logo and place on a smooth rounded badge for QR placement."""
     logo = logo.convert("RGBA")
-    logo = logo.resize((size, size), Image.Resampling.LANCZOS)
-    mask = Image.new("L", (size, size), 0)
-    draw = ImageDraw.Draw(mask)
-    draw.ellipse((0, 0, size, size), fill=255)
-    circle = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    circle.paste(logo, mask=mask)
-    return circle
+    
+    # Create white/navy rounded badge for max contrast and QR readability
+    badge = Image.new("RGBA", (size, size), (255, 255, 255, 255))
+    draw = ImageDraw.Draw(badge)
+    radius = int(size * 0.18)
+    draw.rounded_rectangle((0, 0, size - 1, size - 1), radius=radius, fill=(15, 23, 42, 255), outline=(255, 255, 255, 255), width=2)
+    
+    inner_size = int(size * 0.88)
+    logo_resized = logo.resize((inner_size, inner_size), Image.Resampling.LANCZOS)
+    pos = ((size - inner_size) // 2, (size - inner_size) // 2)
+    badge.paste(logo_resized, pos, logo_resized)
+    return badge
 
 
 def generate_logo_qr(link, logo_file, fill_color, back_color, box_size, border):
@@ -128,7 +133,15 @@ def generate_logo_qr(link, logo_file, fill_color, back_color, box_size, border):
     img_qr = qr.make_image(fill_color=fill_color, back_color=back_color).convert("RGBA")
 
     logo_size = int(img_qr.size[0] * 0.25)
-    logo = make_circle_logo(Image.open(logo_file), logo_size)
+    
+    # Use uploaded logo file if provided, otherwise default to D-Coders Squad official logo
+    if logo_file and getattr(logo_file, "filename", None):
+        logo_img = Image.open(logo_file)
+    else:
+        default_logo_path = os.path.join(app.root_path, "static", "icons", "dc_logo.png")
+        logo_img = Image.open(default_logo_path)
+
+    logo = make_circle_logo(logo_img, logo_size)
 
     pos = (
         (img_qr.size[0] - logo.size[0]) // 2,
@@ -220,8 +233,6 @@ def generate():
 
         if mode == "logo":
             logo_file = request.files.get("logo")
-            if not logo_file:
-                return jsonify({"error": "Please upload a logo image for Logo QR mode."}), 400
             img = generate_logo_qr(link, logo_file, fill_color, back_color, box_size, border)
         else:
             img = generate_standard_qr(link, fill_color, back_color, box_size, border)

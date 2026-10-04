@@ -1,6 +1,6 @@
-# QR Code Generator
+# D-Coders Squad QR Code Generator
 
-A web-based QR code generator built with **Python** and **Flask**. Generate standard QR codes or QR codes with an embedded logo, with full customisation over colours, size, and border.
+A web-based QR code generator dedicated to **D-Coders Squad Competitive Coding Group**, built with **Python** and **Flask**. Generate standard QR codes or customized QR codes embedded with the official D-Coders Squad logo (or any custom logo).
 
 ---
 
